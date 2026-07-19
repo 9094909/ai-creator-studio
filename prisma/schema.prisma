@@ -1,0 +1,99 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User model for authentication
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String?
+  avatar    String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  projects  Project[]
+  contents  Content[]
+  comments  Comment[]
+  likes     Like[]
+
+  @@map("users")
+}
+
+// Project model
+model Project {
+  id        String     @id @default(cuid())
+  title     String
+  description String?
+  thumbnail String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contents  Content[]
+  comments  Comment[]
+
+  @@map("projects")
+}
+
+// Content model
+model Content {
+  id        String     @id @default(cuid())
+  title     String
+  body      String
+  tags      String[]
+  published Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     Like[]
+
+  @@map("contents")
+}
+
+// Comment model
+model Comment {
+  id        String     @id @default(cuid())
+  text      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId String
+  content   Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+// Like model
+model Like {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+
+  // Relations
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId String
+  content   Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@map("likes")
+}
